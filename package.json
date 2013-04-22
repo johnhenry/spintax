@@ -1,0 +1,19 @@
+{
+  "name": "spintax",
+  "version": "0.0.1",
+  "description": "Parse spintax formatted text",
+  "keywords": ["spintax","text","spam","seo","substitute","substitution"],
+  "author": "John Henry <john@iamjohnhenry.com>",
+  "homepage": "https://github.com/johnhenry/valid-email",
+  "scripts": {
+      "test": "expresso test/*"
+      },
+    "devDependencies":{
+        "expresso":"0.9.x"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/johnhenry/spintax.git"
+  },
+  "main": "index"
+}
