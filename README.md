@@ -1,8 +1,6 @@
 #Spintax
 
-##Parse spintax formatted text
-Regular expression validation is often useful, but also often inaccurate.
-Sometimes it's just better to do it manually
+##Create unique strings
 
 ##Node
 ### Installation
