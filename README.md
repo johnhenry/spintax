@@ -22,7 +22,7 @@ You can also import the library directly in your HTML file using a CDN:
 </script>
 ```
 
-`https://ga.jspm.io/npm:spintax@1.0.0/`
+Note that `https://ga.jspm.io/npm:spintax@1.0.0/src/index.mjs` is also available.
 
 ## Key Features
 
