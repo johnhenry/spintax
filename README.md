@@ -18,11 +18,11 @@ You can also import the library directly in your HTML file using a CDN:
 
 ```html
 <script type="module">
-  import parse from "https://cdn.jsdelivr.net/npm/spintax@1.1.0/src/index.mjs";
+  import parse from "https://cdn.jsdelivr.net/npm/spintax@1.1.1/src/index.mjs";
 </script>
 ```
 
-Note that `https://ga.jspm.io/npm:spintax@1.1.0/src/index.mjs` is also available.
+Note that `https://ga.jspm.io/npm:spintax@1.1.1/src/index.mjs` is also available.
 
 ## Key Features
 
