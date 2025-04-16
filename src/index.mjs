@@ -605,35 +605,25 @@ const choose = (
 
   // Create the picker function
   return (...inputChoices) => {
-    // First, identify the actual choice patterns (non-back references)
-    const actualChoiceIndices = [];
-    const actualChoiceValues = [];
+    // Create an array for all resolved values
+    const resolvedValues = new Array(patterns.length);
+    let inputChoiceIndex = 0; // Track position in inputChoices
     
-    for (let i = 0; i < generatorPatterns.length; i++) {
+    // First, resolve actual pattern choices
+    for (let i = 0; i < patterns.length; i++) {
       if (backReferences[i] === null) {
         // This is a regular pattern (not a back reference)
-        actualChoiceIndices.push(i); // Remember its original position
-        
-        // Get the values for this choice
         const values = generators[i];
         
-        // Determine the index to use (provided or random)
-        const choiceIndex = inputChoices[actualChoiceIndices.length - 1] !== undefined
-          ? inputChoices[actualChoiceIndices.length - 1]
+        // Get the choice index (provided or random)
+        const choiceIndex = inputChoices[inputChoiceIndex] !== undefined
+          ? inputChoices[inputChoiceIndex]
           : Math.floor(Math.random() * values.length);
         
         // Store the selected value
-        actualChoiceValues.push(values[choiceIndex]);
+        resolvedValues[i] = values[choiceIndex];
+        inputChoiceIndex++; // Move to next input choice
       }
-    }
-    
-    // Create a final array with all values resolved
-    const resolvedValues = new Array(patterns.length);
-    
-    // First, place the actual choices in their original positions
-    for (let i = 0; i < actualChoiceValues.length; i++) {
-      const originalIndex = actualChoiceIndices[i];
-      resolvedValues[originalIndex] = actualChoiceValues[i];
     }
     
     // Then, resolve all back references
@@ -642,11 +632,25 @@ const choose = (
         // This is a back reference
         const refIndex = backReferences[i];
         
-        // Find the actual value it refers to
-        if (refIndex < actualChoiceValues.length) {
-          // Map to the original position
-          const refOriginalIndex = actualChoiceIndices[refIndex];
-          resolvedValues[i] = resolvedValues[refOriginalIndex];
+        // Count up to the nth actual choice
+        let actualChoiceCount = 0;
+        let refValue = null;
+        
+        for (let j = 0; j < patterns.length; j++) {
+          if (backReferences[j] === null) {
+            // This is an actual choice
+            if (actualChoiceCount === refIndex) {
+              // Found the referenced choice
+              refValue = resolvedValues[j];
+              break;
+            }
+            actualChoiceCount++;
+          }
+        }
+        
+        if (refValue !== null) {
+          // Valid back reference
+          resolvedValues[i] = refValue;
         } else {
           // Invalid back reference
           resolvedValues[i] = `{${backReferenceMarker}${refIndex}}`;

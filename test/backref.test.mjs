@@ -1,7 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 
-import { parse } from "../src/index.mjs";
+import { parse, choose } from "../src/index.mjs";
 
 describe("Back References", () => {
   it("should support basic back references", () => {
@@ -24,6 +24,7 @@ describe("Back References", () => {
     assert.ok(values.includes("The red box is a red box."));
     assert.ok(values.includes("The blue circle is a blue circle."));
     assert.ok(values.includes("The green box is a green box."));
+    console.log({ values });
   });
 
   it("should support back references with ranges", () => {
@@ -82,5 +83,28 @@ describe("Back References", () => {
       "The cost is $10. Yes, $$$ dollars. Reference: 10",
       "The cost is $20. Yes, $$$ dollars. Reference: 20",
     ]);
+  });
+
+  it("should work with choose function", () => {
+    const picker = choose(
+      "Hello {world|nurse}! Are you really a {$0}? Well then, how do we get {there|here}"
+    );
+
+    // Test with specific choices
+    const result1 = picker(1, 0); // nurse, there
+    assert.equal(
+      result1,
+      "Hello nurse! Are you really a nurse? Well then, how do we get there"
+    );
+
+    // Test with undefined for random choice
+    const result2 = picker(0, undefined);
+    // Since the second choice is random, we can only check that the back reference works
+    assert.ok(
+      result2 ===
+        "Hello world! Are you really a world? Well then, how do we get there" ||
+        result2 ===
+          "Hello world! Are you really a world? Well then, how do we get here"
+    );
   });
 });
