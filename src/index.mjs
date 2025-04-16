@@ -211,6 +211,7 @@ function compile(strings, ...expressions) {
 /**
  * Determines if a pattern contains only numeric values and commas (a range pattern)
  * @param {string} pattern - The pattern to check
+ * @param {string} separator - The separator character
  * @returns {boolean} True if the pattern is a range pattern, false otherwise
  * @private
  */
@@ -219,17 +220,16 @@ function isRangePattern(pattern, separator = ",") {
   const noWhitespace = pattern.replace(/\s+/g, "");
 
   // Remove trailing commas if present
-  // const separatorPattern = /,+$/
   const separatorPattern = new RegExp(`\\${separator}+$`);
   const trimmedPattern = noWhitespace.replace(separatorPattern, "");
 
   // Must have at least one comma to be a range
-  if (!trimmedPattern.includes(",")) {
+  if (!trimmedPattern.includes(separator)) {
     return false;
   }
 
   // Split by commas and check each part is a valid number
-  const parts = trimmedPattern.split(",");
+  const parts = trimmedPattern.split(separator);
 
   // Range patterns must have 2 or 3 parts
   if (parts.length < 2 || parts.length > 3) {
@@ -248,6 +248,7 @@ function isRangePattern(pattern, separator = ",") {
 /**
  * Parses a range pattern into start, end, and optional step values
  * @param {string} pattern - The range pattern to parse
+ * @param {string} separator - The separator character
  * @returns {[number, number, number]} Array with [start, end, step]
  * @private
  */
@@ -272,6 +273,7 @@ function parseRangePattern(pattern, separator = ",") {
 /**
  * Parses a choices pattern, preserving whitespace in the options
  * @param {string} pattern - The choices pattern to parse
+ * @param {string} separator - The separator character
  * @returns {string[]} Array of choice options
  * @private
  */
@@ -282,11 +284,14 @@ function parseChoicesPattern(pattern, separator = "|") {
 
 /**
  * Shared helper for parse and count functions
- *
- *
- *
- **/
-
+ * Extracts patterns from the template string
+ * @param {string} template - The template string
+ * @param {Object} options - Options for pattern extraction
+ * @param {string} options.patternStart - Pattern start delimiter
+ * @param {string} options.patternEnd - Pattern end delimiter
+ * @returns {Object} Object containing patterns and string parts
+ * @private
+ */
 function subHelper(template, { patternStart, patternEnd } = {}) {
   // Find all {...} patterns
   const patterns = [];
@@ -323,12 +328,20 @@ function subHelper(template, { patternStart, patternEnd } = {}) {
  * - {1,10,2} - Range from 1 to 10 with step 2 (whitespace ignored)
  * - {option1|option2|option3} - Choices between options (whitespace preserved)
  * - {singleOption} - Single choice (whitespace preserved)
+ * - {$n} - Back reference to the nth choice (0-based index)
  *
  * @param {string} template - Template string with {...} patterns
+ * @param {Object} options - Options for pattern parsing
+ * @param {string} options.patternStart - Pattern start delimiter (default: '{')
+ * @param {string} options.patternEnd - Pattern end delimiter (default: '}')
+ * @param {string} options.separatorRange - Separator for range patterns (default: ',')
+ * @param {string} options.separatorChoices - Separator for choices patterns (default: '|')
+ * @param {string} options.backReferenceMarker - Marker for back references (default: '$')
  * @returns {IterableIterator<string>} Iterator of all pattern combinations
  * @example
  * parse('Count: {1,5}') // Equivalent to compile`Count: ${range(1, 5)}`
  * parse('Color: {red|green|blue}') // Equivalent to compile`Color: ${['red', 'green', 'blue']}`
+ * parse('You {see|hear} that. Once you {$0}.') // Back references previous choice
  */
 function parse(
   template,
@@ -337,18 +350,42 @@ function parse(
     patternEnd = "}",
     separatorRange = ",",
     separatorChoices = "|",
+    backReferenceMarker = "$"
   } = {}
 ) {
   const { patterns, stringParts } = subHelper(template, {
     patternStart,
-    patternEnd,
-    separatorRange,
-    separatorChoices,
+    patternEnd
   });
 
+  // First pass: identify back references
+  const backReferenceRegex = new RegExp(`\\${backReferenceMarker}(\\d+)`);
+  const backReferences = [];
+  const generatorPatterns = [];
+  
+  // Separate back references from regular patterns
+  for (const pattern of patterns) {
+    const backRefMatch = pattern.match(backReferenceRegex);
+    
+    if (backRefMatch && backRefMatch[0] === pattern && pattern.trim() === backRefMatch[0]) {
+      // This is a back reference pattern
+      const refIndex = parseInt(backRefMatch[1], 10);
+      backReferences.push(refIndex);
+      generatorPatterns.push(null); // Placeholder
+    } else {
+      // Regular pattern
+      backReferences.push(null);
+      generatorPatterns.push(pattern);
+    }
+  }
+  
   // Convert patterns to generators
-  const generators = patterns.map((pattern) => {
-    if (isRangePattern(pattern, separatorRange)) {
+  const generators = generatorPatterns.map((pattern) => {
+    if (!pattern) {
+      // Back reference placeholder - use a dummy generator with a single value
+      // It will be replaced during iteration with actual referenced value
+      return new StaticGenerator(""); // Just a placeholder
+    } else if (isRangePattern(pattern, separatorRange)) {
       // It's a range pattern, parse ignoring whitespace
       const [start, end, step] = parseRangePattern(pattern, separatorRange);
       return range(start, end, step);
@@ -362,9 +399,75 @@ function parse(
   const templateStrings = Object.assign([...stringParts], {
     raw: [...stringParts],
   });
-
-  // Use compile with the parsed parts
-  return compile(templateStrings, ...generators);
+  
+  // Custom generator to handle back references
+  return {
+    [Symbol.iterator]: function* () {
+      // First, identify the actual choice patterns (non-back references)
+      const actualChoicePatterns = [];
+      const actualChoiceIndices = [];
+      
+      for (let i = 0; i < generatorPatterns.length; i++) {
+        if (backReferences[i] === null) {
+          // This is a regular pattern (not a back reference)
+          actualChoicePatterns.push(generators[i]); // Keep the generator
+          actualChoiceIndices.push(i); // Remember its original position
+        }
+      }
+      
+      // Generate all combinations of actual choices
+      for (const actualCombination of cartesianProduct(actualChoicePatterns)) {
+        // Create a combination with back references resolved
+        const resolvedCombination = new Array(patterns.length);
+        
+        // First, place the actual choices in their original positions
+        for (let i = 0; i < actualCombination.length; i++) {
+          const originalIndex = actualChoiceIndices[i];
+          resolvedCombination[originalIndex] = actualCombination[i];
+        }
+        
+        // Then, resolve the back references
+        for (let i = 0; i < patterns.length; i++) {
+          if (backReferences[i] !== null) {
+            // This is a back reference
+            const refIndex = backReferences[i];
+            
+            // Find the actual value it refers to by finding the refIndex-th actual choice
+            let actualChoicesSeen = 0;
+            let refValue = null;
+            
+            for (let j = 0; j < i; j++) {
+              if (backReferences[j] === null) {
+                // This is an actual choice
+                if (actualChoicesSeen === refIndex) {
+                  // This is the one we want
+                  refValue = resolvedCombination[j];
+                  break;
+                }
+                actualChoicesSeen++;
+              }
+            }
+            
+            if (refValue !== null) {
+              // Valid back reference
+              resolvedCombination[i] = refValue;
+            } else {
+              // Invalid back reference
+              resolvedCombination[i] = `{${backReferenceMarker}${refIndex}}`;
+            }
+          }
+        }
+        
+        // Build the result string
+        let result = stringParts[0];
+        for (let i = 0; i < resolvedCombination.length; i++) {
+          result += resolvedCombination[i] + stringParts[i + 1];
+        }
+        
+        yield result;
+      }
+    }
+  };
 }
 
 /**
@@ -373,10 +476,16 @@ function parse(
  * Pattern formats:
  * - see "parse" function above
  * @param {string} template - Template string with {...} patterns
+ * @param {Object} options - Options for counting
+ * @param {string} options.patternStart - Pattern start delimiter (default: '{')
+ * @param {string} options.patternEnd - Pattern end delimiter (default: '}')
+ * @param {string} options.separatorRange - Separator for range patterns (default: ',')
+ * @param {string} options.separatorChoices - Separator for choices patterns (default: '|')
+ * @param {string} options.backReferenceMarker - Marker for back references (default: '$')
  * @returns {number} Total number of combinations
  * @example
- * parse('Count: {1,5}') // 5
- * parse('Color: {red|green|blue}') // 3
+ * count('Count: {1,5}') // 5
+ * count('Color: {red|green|blue}') // 3
  */
 function count(
   template,
@@ -385,28 +494,64 @@ function count(
     patternEnd = "}",
     separatorRange = ",",
     separatorChoices = "|",
+    backReferenceMarker = "$"
   } = {}
 ) {
-  let count = 1;
-  const { patterns } = subHelper(template, {
+  // Use the same pattern extraction as parse
+  const { patterns, stringParts } = subHelper(template, {
     patternStart,
     patternEnd,
   });
 
-  patterns.forEach((pattern) => {
+  // First pass: identify back references
+  const backReferenceRegex = new RegExp(`\\${backReferenceMarker}(\\d+)`);
+  const actualChoicePatterns = [];
+  
+  // Separate back references from regular patterns
+  for (const pattern of patterns) {
+    const backRefMatch = pattern.match(backReferenceRegex);
+    
+    if (!(backRefMatch && backRefMatch[0] === pattern && pattern.trim() === backRefMatch[0])) {
+      // This is a regular pattern (not a back reference)
+      actualChoicePatterns.push(pattern);
+    }
+  }
+  
+  // Count is the product of the number of choices for each actual pattern
+  let totalCount = 1;
+  
+  actualChoicePatterns.forEach((pattern) => {
     if (isRangePattern(pattern, separatorRange)) {
       // It's a range pattern, parse ignoring whitespace
       const [start, end, step] = parseRangePattern(pattern, separatorRange);
       // Calculate the number of values in the range
-      // const rangeCount = Math.floor((end - start) / step) + 1; // TODO : not sure if this is right? Does this account for end properly?
       const rangeCount = [...range(start, end, step)].length;
-      count *= rangeCount;
+      totalCount *= rangeCount;
     } else {
-      count *= pattern.split(separatorChoices).length;
+      // It's a choices pattern
+      totalCount *= pattern.split(separatorChoices).length;
     }
   });
-  return count;
+  
+  return totalCount;
 }
+
+/**
+ * Chooses one random or specified combination from the template
+ * 
+ * @param {string} template - Template string with {...} patterns
+ * @param {Object} options - Options for choosing
+ * @param {string} options.patternStart - Pattern start delimiter (default: '{')
+ * @param {string} options.patternEnd - Pattern end delimiter (default: '}')
+ * @param {string} options.separatorRange - Separator for range patterns (default: ',')
+ * @param {string} options.separatorChoices - Separator for choices patterns (default: '|')
+ * @param {string} options.backReferenceMarker - Marker for back references (default: '$')
+ * @returns {Function} Function that returns a single combination
+ * @example
+ * const picker = choose("The {red|blue|green} {box|circle}");
+ * picker() // Random combination like "The red box"
+ * picker(0, 1) // Specific combination "The red circle"
+ */
 const choose = (
   template,
   {
@@ -414,18 +559,41 @@ const choose = (
     patternEnd = "}",
     separatorRange = ",",
     separatorChoices = "|",
+    backReferenceMarker = "$"
   } = {}
 ) => {
   const { patterns, stringParts } = subHelper(template, {
     patternStart,
-    patternEnd,
-    separatorRange,
-    separatorChoices,
+    patternEnd
   });
 
-  // Convert patterns to generators
-  const generators = patterns.map((pattern) => {
-    if (isRangePattern(pattern, separatorRange)) {
+  // First pass: identify back references
+  const backReferenceRegex = new RegExp(`\\${backReferenceMarker}(\\d+)`);
+  const backReferences = [];
+  const generatorPatterns = [];
+  
+  // Separate back references from regular patterns
+  for (const pattern of patterns) {
+    const backRefMatch = pattern.match(backReferenceRegex);
+    
+    if (backRefMatch && backRefMatch[0] === pattern && pattern.trim() === backRefMatch[0]) {
+      // This is a back reference pattern
+      const refIndex = parseInt(backRefMatch[1], 10);
+      backReferences.push(refIndex);
+      generatorPatterns.push(null); // Placeholder
+    } else {
+      // Regular pattern
+      backReferences.push(null);
+      generatorPatterns.push(pattern);
+    }
+  }
+  
+  // Convert patterns to arrays of values
+  const generators = generatorPatterns.map((pattern) => {
+    if (!pattern) {
+      // Back reference placeholder (will be replaced during resolution)
+      return [""]; // Dummy placeholder
+    } else if (isRangePattern(pattern, separatorRange)) {
       // It's a range pattern, parse ignoring whitespace
       const [start, end, step] = parseRangePattern(pattern, separatorRange);
       return [...range(start, end, step)];
@@ -435,21 +603,64 @@ const choose = (
     }
   });
 
-  // Create template strings array (needs to have a raw property)
-  const templateStrings = Object.assign([...stringParts], {
-    raw: [...stringParts],
-  });
-
-  return (...choices) => {
-    const picks = generators.map((generator, index) => {
-      // Choose a random value from the generator
-      const values = [...generator];
-      const randomIndex =
-        choices[index] ?? Math.floor(Math.random() * values.length);
-      return [values[randomIndex]];
-    });
-    // Use compile with the parsed parts
-    return [...compile(templateStrings, ...picks)][0];
+  // Create the picker function
+  return (...inputChoices) => {
+    // First, identify the actual choice patterns (non-back references)
+    const actualChoiceIndices = [];
+    const actualChoiceValues = [];
+    
+    for (let i = 0; i < generatorPatterns.length; i++) {
+      if (backReferences[i] === null) {
+        // This is a regular pattern (not a back reference)
+        actualChoiceIndices.push(i); // Remember its original position
+        
+        // Get the values for this choice
+        const values = generators[i];
+        
+        // Determine the index to use (provided or random)
+        const choiceIndex = inputChoices[actualChoiceIndices.length - 1] !== undefined
+          ? inputChoices[actualChoiceIndices.length - 1]
+          : Math.floor(Math.random() * values.length);
+        
+        // Store the selected value
+        actualChoiceValues.push(values[choiceIndex]);
+      }
+    }
+    
+    // Create a final array with all values resolved
+    const resolvedValues = new Array(patterns.length);
+    
+    // First, place the actual choices in their original positions
+    for (let i = 0; i < actualChoiceValues.length; i++) {
+      const originalIndex = actualChoiceIndices[i];
+      resolvedValues[originalIndex] = actualChoiceValues[i];
+    }
+    
+    // Then, resolve all back references
+    for (let i = 0; i < patterns.length; i++) {
+      if (backReferences[i] !== null) {
+        // This is a back reference
+        const refIndex = backReferences[i];
+        
+        // Find the actual value it refers to
+        if (refIndex < actualChoiceValues.length) {
+          // Map to the original position
+          const refOriginalIndex = actualChoiceIndices[refIndex];
+          resolvedValues[i] = resolvedValues[refOriginalIndex];
+        } else {
+          // Invalid back reference
+          resolvedValues[i] = `{${backReferenceMarker}${refIndex}}`;
+        }
+      }
+    }
+    
+    // Build the result string
+    let result = stringParts[0];
+    for (let i = 0; i < resolvedValues.length; i++) {
+      result += resolvedValues[i] + stringParts[i + 1];
+    }
+    
+    return result;
   };
 };
 

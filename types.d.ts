@@ -1,5 +1,6 @@
 /**
  * Type definitions for spintax
+ * Combinatorial String Generator
  */
 
 export type ChoiceValue = string | number;
@@ -34,7 +35,7 @@ export function range(
  */
 export function compile(
   strings: TemplateStringsArray,
-  ...expressions: (CartesianGenerator<number> | string[])[]
+  ...expressions: (CartesianGenerator<number | string> | string[] | number[])[]
 ): IterableIterator<string>;
 
 /**
@@ -45,9 +46,17 @@ export function compile(
  * - {1,10,2} - Range from 1 to 10 with step 2
  * - {option1|option2|option3} - Choices between options
  * - {singleOption} - Single choice
+ * - {$n} - Back reference to the nth choice (0-based index)
  *
  * @example
  * parse('Count: {1,5}') // Equivalent to compile`Count: ${range(1, 5)}`
  * parse('Color: {red|green|blue}') // Equivalent to compile`Color: ${['red', 'green', 'blue']}`
+ * parse('You {see|hear|feel} the work. Once you {$0}.') // Back references previous choice
  */
-export function parse(template: string): IterableIterator<string>;
+export function parse(template: string, options?: {
+  patternStart?: string;
+  patternEnd?: string;
+  separatorRange?: string;
+  separatorChoices?: string;
+  backReferenceMarker?: string;
+}): IterableIterator<string>;
