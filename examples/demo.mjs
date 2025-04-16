@@ -77,14 +77,9 @@ console.log("=========================================");
 const parsedJson = parse(
   '{"type": "{basic|premium}", "level": {1,3}, "active": {true|false}}'
 );
-console.log("First 4 combinations:");
-let index = 0;
+
 for (const item of parsedJson) {
   console.log(item);
-  if (++index >= 4) {
-    console.log(`... and ${2 * 3 * 2 - 4} more combinations`);
-    break;
-  }
 }
 
 console.log("\nDEMO 10: Parse function for URL generation");
@@ -92,5 +87,13 @@ console.log("====================================");
 
 const urls = parse("https://example.com/{products|users}/{1,5}");
 for (const url of urls) {
+  console.log(url);
+}
+
+console.log("\nDEMO 11: Back References");
+console.log("====================================");
+
+const str = parse("{1,5} {0|2|4} {$0} {$1}");
+for (const url of str) {
   console.log(url);
 }

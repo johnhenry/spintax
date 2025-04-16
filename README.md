@@ -18,11 +18,11 @@ You can also import the library directly in your HTML file using a CDN:
 
 ```html
 <script type="module">
-  import parse from "https://cdn.jsdelivr.net/npm/spintax@1.0.0/src/index.mjs";
+  import parse from "https://cdn.jsdelivr.net/npm/spintax@1.1.0/src/index.mjs";
 </script>
 ```
 
-Note that `https://ga.jspm.io/npm:spintax@1.0.0/src/index.mjs` is also available.
+Note that `https://ga.jspm.io/npm:spintax@1.1.0/src/index.mjs` is also available.
 
 ## Key Features
 
@@ -59,6 +59,12 @@ const counts = parse("Count: {1,5}");
 // Multiple variables
 const products = parse("{Product|Service} #{1,3} ({Standard|Premium})");
 // Generates all combinations: "Product #1 (Standard)", "Product #1 (Premium)", etc.
+
+// Back references
+const associations = parse(
+  "The {blue|straw|rasp}berries taste like {$0}berries)"
+);
+// Generates all combinations with back references: "The blueberries taste like blueberries", "The strawberries taste like strawberries", "The raspberries taste like raspberries", etc.
 ```
 
 ## Pattern Syntax
