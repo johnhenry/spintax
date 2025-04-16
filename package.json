@@ -1,19 +1,41 @@
 {
   "name": "spintax",
-  "version": "0.0.1",
-  "description": "Parse spintax formatted text",
-  "keywords": ["spintax","text","spam","seo","substitute","substitution"],
-  "author": "John Henry <john@iamjohnhenry.com>",
-  "homepage": "https://github.com/johnhenry/valid-email",
+  "version": "1.0.0",
+  "description": "Combinatorial string generator using spintax syntax",
+  "type": "module",
+  "main": "src/index.mjs",
+  "types": "types.d.ts",
+  "homepage": "https://github.com/johnhenry/spintax",
   "scripts": {
-      "test": "expresso test/*"
-      },
-    "devDependencies":{
-        "expresso":"0.9.x"
+    "test": "node --test test/**/*.test.mjs",
+    "demo": "node examples/demo.mjs"
   },
+  "keywords": [
+    "spintax",
+    "template",
+    "string",
+    "combinations",
+    "permutations",
+    "generator",
+    "iterator",
+    "text",
+    "spam",
+    "seo",
+    "substitute",
+    "substitution"
+  ],
+  "author": "John Henry <john@iamjohnhenry.com>",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "files": [
+    "src",
+    "types.d.ts",
+    "README.md"
+  ],
   "repository": {
     "type": "git",
     "url": "git://github.com/johnhenry/spintax.git"
-  },
-  "main": "index"
+  }
 }
