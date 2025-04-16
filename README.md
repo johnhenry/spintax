@@ -1,5 +1,7 @@
 # Spintax
 
+<img src="https://raw.githubusercontent.com/johnhenry/spintax/main/logo.png" alt="AI.Matey Logo" style="width:256px; height:256px">
+
 A combinatorial string generation library that creates all possible combinations from templates with variable elements.
 
 ## Installation
@@ -18,11 +20,11 @@ You can also import the library directly in your HTML file using a CDN:
 
 ```html
 <script type="module">
-  import parse from "https://cdn.jsdelivr.net/npm/spintax@1.1.1/src/index.mjs";
+  import parse from "https://cdn.jsdelivr.net/npm/spintax@1.1.2/src/index.mjs";
 </script>
 ```
 
-Note that `https://ga.jspm.io/npm:spintax@1.1.1/src/index.mjs` is also available.
+Note that `https://ga.jspm.io/npm:spintax@1.1.2/src/index.mjs` is also available.
 
 ## Key Features
 
