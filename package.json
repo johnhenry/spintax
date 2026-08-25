@@ -7,7 +7,7 @@
   "types": "types.d.ts",
   "homepage": "https://opensource.johnhenry.me/spintax/",
   "scripts": {
-    "test": "node --test test/**/*.test.mjs",
+    "test": "node --test",
     "demo": "node examples/demo.mjs"
   },
   "keywords": [
