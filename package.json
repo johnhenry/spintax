@@ -1,11 +1,11 @@
 {
-  "name": "spintax",
-  "version": "1.1.2",
+  "name": "@johnhenry/spintax",
+  "version": "0.0.0",
   "description": "Combinatorial string generator using spintax syntax",
   "type": "module",
   "main": "src/index.mjs",
   "types": "types.d.ts",
-  "homepage": "https://github.com/johnhenry/spintax",
+  "homepage": "https://opensource.johnhenry.me/spintax/",
   "scripts": {
     "test": "node --test test/**/*.test.mjs",
     "demo": "node examples/demo.mjs"
@@ -36,6 +36,6 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git://github.com/johnhenry/spintax.git"
+    "url": "git+https://github.com/johnhenry/spintax.git"
   }
 }

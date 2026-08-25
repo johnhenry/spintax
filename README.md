@@ -1,5 +1,9 @@
 # Spintax
 
+> Previously published as `spintax` (last release 1.1.2, now deprecated).
+> Renamed to `@johnhenry/spintax` and restarted at 0.0.0 on import into
+> the @johnhenry family — a new address and era, not a maturity signal.
+
 <img src="https://raw.githubusercontent.com/johnhenry/spintax/main/logo.png" alt="AI.Matey Logo" style="width:256px; height:256px">
 
 A combinatorial string generation library that creates all possible combinations from templates with variable elements.
@@ -7,11 +11,11 @@ A combinatorial string generation library that creates all possible combinations
 ## Installation
 
 ```bash
-npm install spintax
+npm install @johnhenry/spintax
 ```
 
 ```javascript
-import parse from "spintax";
+import parse from "@johnhenry/spintax";
 ```
 
 ### Web Usage
@@ -40,7 +44,7 @@ Spintax is a JavaScript library for generating all possible combinations of temp
 ## Basic Usage
 
 ```javascript
-import parse from "spintax";
+import parse from "@johnhenry/spintax";
 
 // Basic usage with choices
 const variations = parse("Hello, {world|friend|universe}!");
@@ -212,7 +216,7 @@ While `parse` is the primary function exported from the library, there are addit
 ### Supporting Utilities
 
 ```javascript
-import { compile, range, count } from "spintax";
+import { compile, range, count } from "@johnhenry/spintax";
 ```
 
 ### `compile` Tagged Template Function
@@ -276,7 +280,7 @@ If you are migrating from version 0.0.x to 1.0.0, please note that the API has c
 Old:
 
 ```javascript
-import spintax from "spintax";
+import spintax from "@johnhenry/spintax";
 const result = spintax.unspin("{Hello|Hi} John!");
 console.log(result); // "Hello John!" or "Hi John"
 ```
@@ -284,7 +288,7 @@ console.log(result); // "Hello John!" or "Hi John"
 Current:
 
 ```javascript
-import { choose } from "spintax";
+import { choose } from "@johnhenry/spintax";
 const result = choose("{Hello|Hi} John!");
 console.log(result()); // "Hello John!" or "Hi John"
 ```
@@ -296,7 +300,7 @@ console.log(result()); // "Hello John!" or "Hi John"
 Old:
 
 ```javascript
-import spintax from "spintax";
+import spintax from "@johnhenry/spintax";
 const count = spintax.countVariations("{Hello|Hi} John!");
 console.log(count); // 2
 ```
@@ -304,7 +308,7 @@ console.log(count); // 2
 Current:
 
 ```javascript
-import { count } from "spintax";
+import { count } from "@johnhenry/spintax";
 const count = count("{Hello|Hi} John!");
 console.log(count); // 2
 ```
