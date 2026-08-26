@@ -4,9 +4,11 @@
 > Renamed to `@johnhenry/spintax` and restarted at 0.0.0 on import into
 > the @johnhenry family — a new address and era, not a maturity signal.
 
-<img src="https://raw.githubusercontent.com/johnhenry/spintax/main/logo.png" alt="AI.Matey Logo" style="width:256px; height:256px">
+<img src="https://raw.githubusercontent.com/johnhenry/spintax/main/logo.png" alt="Spintax Logo" style="width:256px; height:256px">
 
 A combinatorial string generation library that creates all possible combinations from templates with variable elements.
+
+Full documentation: [opensource.johnhenry.me/spintax](https://opensource.johnhenry.me/spintax/)
 
 ## Installation
 
@@ -24,11 +26,11 @@ You can also import the library directly in your HTML file using a CDN:
 
 ```html
 <script type="module">
-  import parse from "https://cdn.jsdelivr.net/npm/spintax@1.1.2/src/index.mjs";
+  import parse from "https://cdn.jsdelivr.net/npm/@johnhenry/spintax/src/index.mjs";
 </script>
 ```
 
-Note that `https://ga.jspm.io/npm:spintax@1.1.2/src/index.mjs` is also available.
+Note that `https://ga.jspm.io/npm:@johnhenry/spintax@0.0.0/src/index.mjs` is also available.
 
 ## Key Features
 
@@ -68,7 +70,7 @@ const products = parse("{Product|Service} #{1,3} ({Standard|Premium})");
 
 // Back references
 const associations = parse(
-  "The {blue|straw|rasp}berries taste like {$0}berries)"
+  "The {blue|straw|rasp}berries taste like {$0}berries"
 );
 // Generates all combinations with back references: "The blueberries taste like blueberries", "The strawberries taste like strawberries", "The raspberries taste like raspberries", etc.
 ```
@@ -140,9 +142,14 @@ parse("/api/v{1,3}/{users|items}/{1,100,10}");
 
 ### Configuration Generation
 
+Braces are structural everywhere and have no escape syntax, so JSON-shaped
+templates need custom delimiters (otherwise the JSON's own `{`/`}` are
+consumed as pattern markers):
+
 ```javascript
 parse(
-  '{"timeout": {1000,5000,1000}, "retries": {1,3}, "mode": "{strict|lenient}"}'
+  '{"timeout": <1000,5000,1000>, "retries": <1,3>, "mode": "<strict|lenient>"}',
+  { patternStart: "<", patternEnd: ">" }
 );
 // Generates valid JSON strings with all combinations of parameters
 ```
@@ -260,6 +267,17 @@ Omitting the index returns a random combination:
 ```javascript
 gen(); // "Hello world!" or "Hello nurse!"
 ```
+
+## Examples
+
+Runnable, commented examples live in [`examples/`](./examples/README.md) —
+run them all with `npm run examples`:
+
+1. [Generate every variation](./examples/01-generate-every-variation.mjs) — basic parsing, cross products, iteration order
+2. [Step through number ranges](./examples/02-step-through-number-ranges.mjs) — steps, decimals, the always-included end value
+3. [Echo choices with back references](./examples/03-echo-choices-with-backrefs.mjs) — `{$n}` semantics and edge cases
+4. [Count and pick without expanding](./examples/04-count-and-pick-without-expanding.mjs) — `count`/`choose` on huge spaces
+5. [Reuse compiled templates](./examples/05-reuse-compiled-templates.mjs) — `compile`, re-iteration, chunked draining
 
 ## Browser Compatibility
 
