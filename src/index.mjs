@@ -20,6 +20,21 @@ class Generator {
   [Symbol.iterator]() {
     return this.values();
   }
+
+  /**
+   * Returns the number of values this generator produces, without
+   * materializing them. Subclasses that can compute this analytically
+   * should override it. The default falls back to full enumeration, which
+   * is fine for generator types that are inherently bounded/cheap (e.g.
+   * literal option lists) but should be avoided for anything that can
+   * represent an arbitrarily large numeric range.
+   * @returns {number}
+   */
+  size() {
+    let count = 0;
+    for (const _ of this.values()) count++;
+    return count;
+  }
 }
 
 /**
@@ -45,6 +60,13 @@ class ChoicesGenerator extends Generator {
     for (const option of this.options) {
       yield option;
     }
+  }
+
+  /**
+   * @returns {number} The number of options (O(1))
+   */
+  size() {
+    return this.options.length;
   }
 }
 
@@ -90,6 +112,48 @@ class RangeGenerator extends Generator {
       yield this.end;
     }
   }
+
+  /**
+   * Computes the number of values this range produces analytically
+   * (i.e. without enumerating them), mirroring the exact semantics of
+   * {@link RangeGenerator#values}. This is what makes count() safe to call
+   * on arbitrarily large ranges (e.g. {1,1000000000}) — it's O(1) instead
+   * of O(range size).
+   * @returns {number}
+   */
+  size() {
+    const { start, end, step, includeEnd } = this;
+
+    let mainCount;
+    if (step > 0) {
+      // Mirrors `for (let i = start; i <= end; i += step)`
+      mainCount = start > end ? 0 : Math.floor((end - start) / step) + 1;
+    } else if (step < 0) {
+      // With a non-positive step, `i <= end` either never holds (0
+      // iterations, when start > end) or always holds (infinite, when
+      // start <= end) in the enumeration-based implementation. We report
+      // Infinity rather than hanging.
+      mainCount = start <= end ? Infinity : 0;
+    } else {
+      // step === 0: the loop condition never changes, so it's either an
+      // infinite loop (start <= end) or never runs (start > end).
+      mainCount = start <= end ? Infinity : 0;
+    }
+
+    if (!isFinite(mainCount)) return mainCount;
+
+    let extra = 0;
+    if (
+      includeEnd &&
+      step !== 0 &&
+      (end - start) % step !== 0 &&
+      end > start + Math.floor((end - start) / step) * step
+    ) {
+      extra = 1;
+    }
+
+    return mainCount + extra;
+  }
 }
 
 /**
@@ -110,55 +174,107 @@ class StaticGenerator {
   *values() {
     yield this.value;
   }
+
+  /**
+   * @returns {number} Always 1 (O(1))
+   */
+  size() {
+    return 1;
+  }
 }
 
 /**
- * Helper function to collect all values from a generator
- * @param {Iterable<any>} iterable - The iterable to collect values from
- * @returns {Array<any>} Array of all values
- * @private
- */
-const collectValues = (iterable) => [...iterable];
-
-/**
- * Creates a cartesian product of all provided generators
+ * Creates a cartesian product of all provided generators.
+ *
+ * This is a lazy, odometer-style implementation: each generator's iterator
+ * is pulled forward-only, and values are cached per-position only as far as
+ * they've actually been visited. Rewinding a position (the "carry" step of
+ * the odometer) replays from that position's cache instead of re-invoking
+ * `.values()` or re-enumerating. This means:
+ *   - Getting the first combination only pulls ONE value from each
+ *     generator, regardless of how large any individual generator is.
+ *   - No generator is ever required to be fully materialized up front —
+ *     only generators that are iterated all the way through end up fully
+ *     cached, and only as a byproduct of actually visiting every value.
+ *
  * @param {Array<CartesianGenerator>} generators - List of generators to combine
  * @returns {Generator<Array<any>>} Generator of all combinations
  * @private
  */
 function* cartesianProduct(generators) {
+  const n = generators.length;
+
   // For zero generators, yield an empty combination
-  if (generators.length === 0) {
+  if (n === 0) {
     yield [];
     return;
   }
 
   // For one generator, yield each value as a single-element array
-  if (generators.length === 1) {
+  if (n === 1) {
     for (const value of generators[0].values()) {
       yield [value];
     }
     return;
   }
 
-  // For multiple generators, compute the cartesian product
-  // First, collect all values from each generator
-  const allValues = generators.map((gen) => collectValues(gen.values()));
+  // Per-position lazy state: an iterator pulled forward-only, a cache of
+  // values seen so far (so a position can be "rewound" via its index
+  // without re-materializing anything), and whether it's been exhausted.
+  const iterators = new Array(n);
+  const caches = new Array(n);
+  const exhausted = new Array(n).fill(false);
+  for (let i = 0; i < n; i++) caches[i] = [];
 
-  // Generate all combinations using nested loops
-  function* generateCombinations(index, current) {
-    if (index === allValues.length) {
-      yield [...current];
-      return;
+  // Ensures caches[pos] has a value at `idx`, pulling from the generator's
+  // iterator only as far as needed. Returns false if the generator has
+  // fewer than idx + 1 values.
+  function ensureIndex(pos, idx) {
+    const cache = caches[pos];
+    if (idx < cache.length) return true;
+    if (exhausted[pos]) return false;
+    if (!iterators[pos]) {
+      iterators[pos] = generators[pos].values();
     }
-
-    for (const value of allValues[index]) {
-      current[index] = value;
-      yield* generateCombinations(index + 1, current);
+    while (cache.length <= idx) {
+      const { value, done } = iterators[pos].next();
+      if (done) {
+        exhausted[pos] = true;
+        return false;
+      }
+      cache.push(value);
     }
+    return true;
   }
 
-  yield* generateCombinations(0, new Array(allValues.length));
+  const indices = new Array(n).fill(0);
+
+  // If any generator is empty, there are no combinations at all.
+  for (let pos = 0; pos < n; pos++) {
+    if (!ensureIndex(pos, 0)) return;
+  }
+
+  while (true) {
+    const combination = new Array(n);
+    for (let pos = 0; pos < n; pos++) {
+      combination[pos] = caches[pos][indices[pos]];
+    }
+    yield combination;
+
+    // Advance like an odometer: bump the rightmost position (it varies
+    // fastest, matching the original nested-loop order); if it overflows,
+    // reset it to 0 and carry into the position to its left.
+    let pos = n - 1;
+    while (pos >= 0) {
+      if (ensureIndex(pos, indices[pos] + 1)) {
+        indices[pos]++;
+        break;
+      }
+      indices[pos] = 0;
+      pos--;
+    }
+    if (pos < 0) return; // Every position overflowed: fully enumerated.
+  }
 }
 
 /**
@@ -524,8 +640,10 @@ function count(
     if (isRangePattern(pattern, separatorRange)) {
       // It's a range pattern, parse ignoring whitespace
       const [start, end, step] = parseRangePattern(pattern, separatorRange);
-      // Calculate the number of values in the range
-      const rangeCount = [...range(start, end, step)].length;
+      // Calculate the number of values in the range analytically (O(1)),
+      // rather than enumerating every value just to read `.length` — the
+      // latter is an algorithmic DoS vector for huge ranges (see #7).
+      const rangeCount = range(start, end, step).size();
       totalCount *= rangeCount;
     } else {
       // It's a choices pattern
