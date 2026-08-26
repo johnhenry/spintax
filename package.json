@@ -8,7 +8,8 @@
   "homepage": "https://opensource.johnhenry.me/spintax/",
   "scripts": {
     "test": "node --test",
-    "demo": "node examples/demo.mjs"
+    "demo": "node examples/demo.mjs",
+    "examples": "for f in examples/0*.mjs; do echo \"== $f ==\" && node \"$f\" || exit 1; done"
   },
   "keywords": [
     "spintax",
