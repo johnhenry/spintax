@@ -28,7 +28,7 @@
   "author": "John Henry <john@iamjohnhenry.com>",
   "license": "MIT",
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=26.0.0"
   },
   "files": [
     "src",

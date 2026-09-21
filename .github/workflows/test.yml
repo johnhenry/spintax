@@ -10,7 +10,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [20, 22, 24]
+        # engines.node >=26.0.0 -- test the floor version directly rather
+        # than a matrix of now-unsupported older majors.
+        node-version: [26]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
