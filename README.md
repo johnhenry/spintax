@@ -4,6 +4,10 @@
 > Renamed to `@johnhenry/spintax` and restarted at 0.0.0 on import into
 > the @johnhenry family — a new address and era, not a maturity signal.
 
+[![npm version](https://img.shields.io/npm/v/%40johnhenry%2Fspintax.svg)](https://www.npmjs.com/package/@johnhenry/spintax)
+[![CI](https://github.com/johnhenry/spintax/actions/workflows/test.yml/badge.svg)](https://github.com/johnhenry/spintax/actions/workflows/test.yml)
+[![license](https://img.shields.io/npm/l/%40johnhenry%2Fspintax.svg)](LICENSE.md)
+
 <img src="https://raw.githubusercontent.com/johnhenry/spintax/main/logo.png" alt="Spintax Logo" style="width:256px; height:256px">
 
 A combinatorial string generation library that creates all possible combinations from templates with variable elements.
@@ -286,50 +290,6 @@ The library uses modern JavaScript features:
 - Template literals
 - Generator functions
 - Iterable protocol
-
-## Migrating from 0.0.x
-
-If you are migrating from version 0.0.x to 1.0.0, please note that the API has changed significantly.
-
-### `spintax.unspin` to `choose`
-
-- The `unspin` function has been replaced with `choose`.
-
-Old:
-
-```javascript
-import spintax from "@johnhenry/spintax";
-const result = spintax.unspin("{Hello|Hi} John!");
-console.log(result); // "Hello John!" or "Hi John"
-```
-
-Current:
-
-```javascript
-import { choose } from "@johnhenry/spintax";
-const result = choose("{Hello|Hi} John!");
-console.log(result()); // "Hello John!" or "Hi John"
-```
-
-#### `spintax.countVariations` to `count`
-
-- The `countVariations` function has been replaced with `count`.
-
-Old:
-
-```javascript
-import spintax from "@johnhenry/spintax";
-const count = spintax.countVariations("{Hello|Hi} John!");
-console.log(count); // 2
-```
-
-Current:
-
-```javascript
-import { count } from "@johnhenry/spintax";
-const count = count("{Hello|Hi} John!");
-console.log(count); // 2
-```
 
 ## License
 
