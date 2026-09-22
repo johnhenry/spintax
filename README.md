@@ -6,7 +6,7 @@
 
 [![npm version](https://img.shields.io/npm/v/%40johnhenry%2Fspintax.svg)](https://www.npmjs.com/package/@johnhenry/spintax)
 [![CI](https://github.com/johnhenry/spintax/actions/workflows/test.yml/badge.svg)](https://github.com/johnhenry/spintax/actions/workflows/test.yml)
-[![license](https://img.shields.io/npm/l/%40johnhenry%2Fspintax.svg)](LICENSE.md)
+[![license](https://img.shields.io/npm/l/%40johnhenry%2Fspintax.svg)](LICENSE)
 
 <img src="https://raw.githubusercontent.com/johnhenry/spintax/main/logo.png" alt="Spintax Logo" style="width:256px; height:256px">
 
