@@ -3,6 +3,15 @@ name: Publish to npm
 on:
   release:
     types: [published]
+  push:
+    # Redundant with the release trigger above -- see fileable's publish.yml
+    # for the full incident writeup. `gh release create` also creates the
+    # underlying git tag, so this gives the workflow a second, independent
+    # chance to fire if the release event is ever silently dropped. Safe to
+    # double-fire: the idempotent `npm view` guard makes a second run a
+    # clean no-op.
+    tags:
+      - "v*"
   workflow_dispatch: {}
 
 jobs:
