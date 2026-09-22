@@ -9,7 +9,12 @@
   "scripts": {
     "test": "node --test",
     "demo": "node examples/demo.mjs",
-    "examples": "for f in examples/0*.mjs; do echo \"== $f ==\" && node \"$f\" || exit 1; done"
+    "examples": "for f in examples/0*.mjs; do echo \"== $f ==\" && node \"$f\" || exit 1; done",
+    "example:01": "node examples/01-generate-every-variation.mjs",
+    "example:02": "node examples/02-step-through-number-ranges.mjs",
+    "example:03": "node examples/03-echo-choices-with-backrefs.mjs",
+    "example:04": "node examples/04-count-and-pick-without-expanding.mjs",
+    "example:05": "node examples/05-reuse-compiled-templates.mjs"
   },
   "keywords": [
     "spintax",
