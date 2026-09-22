@@ -1,0 +1,21 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    # Pilot: johnhenry/workflows@main during verification; pin to @v1 once
+    # this run is confirmed green (ecosystem-cohesion-plan.md section 2a).
+    uses: johnhenry/workflows/.github/workflows/ci.yml@main
+    with:
+      node-versions: '["26"]'
+      os: '["ubuntu-latest"]'
+      # spintax has zero dependencies and no committed package-lock.json.
+      install-command: npm install
+      node-cache: ""
+      gate-commands: |
+        npm test
+        npm run examples
