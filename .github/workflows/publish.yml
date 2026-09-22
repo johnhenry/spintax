@@ -11,9 +11,7 @@ jobs:
       contents: read
       id-token: write # required by the reusable workflow's provenance step --
         # see johnhenry/workflows' README for why this must be declared here too.
-    # Pilot: johnhenry/workflows@main during verification; pin to @v1 once
-    # this run is confirmed green (ecosystem-cohesion-plan.md section 2a).
-    uses: johnhenry/workflows/.github/workflows/npm-publish.yml@main
+    uses: johnhenry/workflows/.github/workflows/npm-publish.yml@v1
     with:
       node-version: "26"
       # spintax has zero dependencies and no committed package-lock.json.

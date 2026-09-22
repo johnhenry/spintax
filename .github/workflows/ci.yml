@@ -7,9 +7,7 @@ on:
 
 jobs:
   test:
-    # Pilot: johnhenry/workflows@main during verification; pin to @v1 once
-    # this run is confirmed green (ecosystem-cohesion-plan.md section 2a).
-    uses: johnhenry/workflows/.github/workflows/ci.yml@main
+    uses: johnhenry/workflows/.github/workflows/ci.yml@v1
     with:
       node-versions: '["26"]'
       os: '["ubuntu-latest"]'
