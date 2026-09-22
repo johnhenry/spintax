@@ -14,6 +14,26 @@ A combinatorial string generation library that creates all possible combinations
 
 Full documentation: [opensource.johnhenry.me/spintax](https://opensource.johnhenry.me/spintax/)
 
+## Contents
+
+- [Installation](#installation)
+- [Key Features](#key-features)
+- [Overview](#overview)
+- [Basic Usage](#basic-usage)
+- [Pattern Syntax](#pattern-syntax)
+  - [Choices](#choices)
+  - [Ranges](#ranges)
+  - [Pattern Combinations](#pattern-combinations)
+- [Whitespace Handling](#whitespace-handling)
+- [Advanced Examples](#advanced-examples)
+- [Iteration Order](#iteration-order)
+- [Performance Considerations](#performance-considerations)
+- [Best Practices](#best-practices)
+- [Advanced API](#advanced-api)
+- [Examples](#examples)
+- [Browser Compatibility](#browser-compatibility)
+- [License](#license)
+
 ## Installation
 
 ```bash
