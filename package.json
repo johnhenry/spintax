@@ -1,6 +1,6 @@
 {
   "name": "@johnhenry/spintax",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Combinatorial string generator using spintax syntax",
   "type": "module",
   "main": "src/index.mjs",
