@@ -85,7 +85,12 @@ export function count(
   }
 ): number;
 
-export function chooseResult(...indicies: number[]): string;
+/**
+ * A picker function returned by `choose()`. Calling it with no arguments
+ * (or with an index omitted for a given pattern) picks randomly; calling
+ * it with explicit indices selects a specific combination.
+ */
+export type ChooseResult = (...indicies: number[]) => string;
 
 export function choose(
   template: string,
@@ -96,9 +101,6 @@ export function choose(
     separatorChoices?: string;
     backReferenceMarker?: string;
   }
-): chooseResult;
+): ChooseResult;
 
-declare module "spintax" {
-  export { parse, range, compile, count, chooseResult, choose };
-  export default parse;
-}
+export default parse;
