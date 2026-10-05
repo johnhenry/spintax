@@ -14,6 +14,15 @@ on:
       - "v*"
   workflow_dispatch: {}
 
+# Releases fire twice: `release: published`, and the tag push it creates.
+# Queue the second run (never cancel it) so its `npm view` guard sees the
+# version the first one published and exits cleanly, instead of both runs
+# publishing at once and one failing (E403/E409). This is not the CI
+# concurrency-cancel block: publish runs must never be cancelled.
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   publish:
     permissions:
