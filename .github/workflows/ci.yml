@@ -17,3 +17,6 @@ jobs:
       gate-commands: |
         npm test
         npm run examples
+
+  workflow-lint:
+    uses: johnhenry/workflows/.github/workflows/workflow-lint.yml@v1
